@@ -3,8 +3,13 @@ info:
   title: Task Manager API
   version: 1.0.0
   description: An API for managing tasks, including CRUD operations, pagination, and flexible search.
+
+servers:
+  - url: http://localhost:5299
+    description: Local Development Server
+
 paths:
-  /tasks:
+  /api/tasks:
     post:
       summary: Retrieve all tasks with pagination and search
       requestBody:
@@ -24,33 +29,15 @@ paths:
                   default: 10
                 searchQuery:
                   type: string
+                  default: ''
                   description: Search query to filter tasks by title, description, or status
       responses:
         '200':
-          description: List of tasks
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  tasks:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Task'
-                  total:
-                    type: integer
-                    description: Total number of tasks
+          $ref: '#/components/responses/SuccessfulOperation'
         '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Invalid request parameters"
-  /tasks/create:
+          $ref: '#/components/responses/BadRequest'
+
+  /api/tasks/create:
     post:
       summary: Create a new task
       requestBody:
@@ -61,22 +48,11 @@ paths:
               $ref: '#/components/schemas/TaskCreateRequest'
       responses:
         '201':
-          description: Task created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Task'
+          $ref: '#/components/responses/Created'
         '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Invalid task data"
-  /tasks/details:
+          $ref: '#/components/responses/BadRequest'
+
+  /api/tasks/details:
     post:
       summary: Retrieve a task by ID
       requestBody:
@@ -91,32 +67,15 @@ paths:
                   description: ID of the task to retrieve
       responses:
         '200':
-          description: Task details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Task'
+          $ref: '#/components/responses/SuccessfulOperation'
         '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Invalid task ID"
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Task not found
-  /tasks/{id}:
+          $ref: '#/components/responses/NotFound'
+
+  /api/tasks/update:
     put:
       summary: Update an existing task
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
       requestBody:
         required: true
         content:
@@ -125,46 +84,33 @@ paths:
               $ref: '#/components/schemas/TaskUpdateRequest'
       responses:
         '200':
-          description: Task updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Task'
+          $ref: '#/components/responses/SuccessfulOperation'
         '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Invalid task data or ID"
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Task not found
-    delete:
-      summary: Delete a task
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+          $ref: '#/components/responses/NotFound'
+
+  /api/tasks/delete:
+    post:
+      summary: Delete a task by ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: ID of the task to delete
       responses:
         '204':
           description: Task deleted successfully
         '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Invalid task ID"
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Task not found
+          $ref: '#/components/responses/NotFound'
+
 components:
   schemas:
     Task:
@@ -181,10 +127,7 @@ components:
         status:
           type: boolean
           example: false
-        createdAt:
-          type: string
-          format: date-time
-          example: "2023-01-01T12:00:00Z"
+
     TaskCreateRequest:
       type: object
       required:
@@ -200,9 +143,15 @@ components:
           maxLength: 200
         status:
           type: boolean
+
     TaskUpdateRequest:
       type: object
+      required:
+        - id
       properties:
+        id:
+          type: integer
+          description: ID of the task to update
         title:
           type: string
           minLength: 3
@@ -212,3 +161,51 @@ components:
           maxLength: 200
         status:
           type: boolean
+
+  responses:
+    SuccessfulOperation:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Task'
+
+    Created:
+      description: Task created successfully
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Task'
+
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid request parameters"
+
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Task not found"
+
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "An unexpected error occurred"
